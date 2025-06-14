@@ -1,0 +1,13 @@
+import { c as create_ssr_component, d as add_attribute, e as escape } from "../../chunks/ssr.js";
+import "../../chunks/client.js";
+const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
+  let loginForm = {
+    email: "",
+    password: ""
+  };
+  return `${$$result.head += `<!-- HEAD_svelte-tel36h_START -->${$$result.title = `<title>Login - University Management Platform</title>`, ""}<!-- HEAD_svelte-tel36h_END -->`, ""} <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"><div class="max-w-md w-full space-y-8"><div class="text-center" data-svelte-h="svelte-nw4xr6"><div class="mx-auto h-20 w-20 bg-primary-600 rounded-full flex items-center justify-center mb-4"><svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div> <h2 class="text-3xl font-bold text-gray-900 mb-2">University Portal</h2> <p class="text-gray-600">Sign in to access your dashboard</p></div> <div class="bg-white p-8 rounded-xl shadow-lg"><form class="space-y-6"><div><label for="userType" class="block text-sm font-medium text-gray-700 mb-2" data-svelte-h="svelte-1wm7vsg">User Type</label> <select class="input-field"><option value="student" data-svelte-h="svelte-zujgbs">Student</option><option value="lecturer" data-svelte-h="svelte-143996u">Lecturer</option><option value="staff" data-svelte-h="svelte-ifpcz2">Staff</option></select></div> <div><label for="email" class="block text-sm font-medium text-gray-700 mb-2" data-svelte-h="svelte-1635q6k">Email Address</label> <input id="email" type="email" required class="input-field" placeholder="Enter your email"${add_attribute("value", loginForm.email, 0)}></div> <div><label for="password" class="block text-sm font-medium text-gray-700 mb-2" data-svelte-h="svelte-nlnl7o">Password</label> <input id="password" type="password" required class="input-field" placeholder="Enter your password"${add_attribute("value", loginForm.password, 0)}></div> <button type="submit" ${""} class="${"w-full btn-primary py-3 " + escape("", true)}">${escape("Sign In")}</button></form> <div class="mt-6 text-center"><p class="text-sm text-gray-600">Don&#39;t have an account?
+          <button class="text-primary-600 hover:text-primary-500 font-medium" data-svelte-h="svelte-1jr0wrd">Register here</button></p></div></div></div></div>`;
+});
+export {
+  Page as default
+};
