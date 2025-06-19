@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { authStore, logout } from '$lib/stores/auth';
+  import { authStore } from '$lib/pocketbase';
   import { goto } from '$app/navigation';
   
   $: user = $authStore.user;
@@ -38,7 +38,7 @@
                 staffNavItems;
   
   function handleLogout() {
-    logout();
+    authStore.logout();
     goto('/');
   }
   

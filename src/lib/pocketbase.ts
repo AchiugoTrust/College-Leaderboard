@@ -222,14 +222,19 @@ function createAuthStore() {
 			password: string;
 			passwordConfirm: string;
 			name: string;
-			username: string;
 			role: 'student' | 'lecturer' | 'staff';
 			student_id?: string;
 			department?: string;
 			year_of_study?: number;
 		}) => {
 			try {
-				const record = await pb.collection('users').create(userData);
+				// Generate username from email (remove domain part)
+				const username = userData.email.split('@')[0];
+				
+				const record = await pb.collection('users').create({
+					...userData,
+					username: username
+				});
 				
 				// Auto-login after registration
 				const authData = await pb.collection('users').authWithPassword(userData.email, userData.password);
@@ -351,6 +356,123 @@ export const utils = {
 	// Mark notification as read
 	markNotificationRead: async (notificationId: string): Promise<void> => {
 		await collections.notifications().update(notificationId, { is_read: true });
+	},
+
+	// Get user stats for dashboard
+	getUserStats: async (userId: string, userRole: string) => {
+		try {
+			if (userRole === 'student') {
+				const enrollments = await collections.enrollments().getFullList({
+					filter: `student = "${userId}" && status = "enrolled"`
+				});
+				
+				const assignments = await collections.assignments().getFullList({
+					filter: `course.enrollments.student ?= "${userId}" && is_published = true && due_date > "${new Date().toISOString()}"`
+				});
+
+				return {
+					enrolledCourses: enrollments.length,
+					assignmentsDue: assignments.length,
+					currentGPA: '3.8',
+					leaderboardRank: '#5'
+				};
+			} else if (userRole === 'lecturer') {
+				const courses = await collections.courses().getFullList({
+					filter: `lecturer = "${userId}" && is_active = true`
+				});
+
+				const submissions = await collections.submissions().getFullList({
+					filter: `assignment.course.lecturer = "${userId}" && status = "submitted"`
+				});
+
+				return {
+					activeCourses: courses.length,
+					totalStudents: 45,
+					assignmentsToGrade: submissions.length,
+					upcomingExams: 2
+				};
+			} else {
+				const students = await collections.users().getFullList({
+					filter: 'role = "student"'
+				});
+
+				const courses = await collections.courses().getFullList({
+					filter: 'is_active = true'
+				});
+
+				const lecturers = await collections.users().getFullList({
+					filter: 'role = "lecturer"'
+				});
+
+				return {
+					totalStudents: students.length,
+					activeCourses: courses.length,
+					totalLecturers: lecturers.length,
+					systemAlerts: 0
+				};
+			}
+		} catch (error) {
+			console.error('Error getting user stats:', error);
+			return {
+				enrolledCourses: 0,
+				assignmentsDue: 0,
+				currentGPA: '0.0',
+				leaderboardRank: '#--',
+				activeCourses: 0,
+				totalStudents: 0,
+				assignmentsToGrade: 0,
+				upcomingExams: 0,
+				totalLecturers: 0,
+				systemAlerts: 0
+			};
+		}
+	},
+
+	// Get upcoming assignments
+	getUpcomingAssignments: async (userId: string) => {
+		try {
+			const assignments = await collections.assignments().getFullList({
+				filter: `course.enrollments.student ?= "${userId}" && is_published = true && due_date > "${new Date().toISOString()}"`,
+				sort: 'due_date',
+				expand: 'course'
+			});
+			return assignments.slice(0, 5);
+		} catch (error) {
+			console.error('Error getting upcoming assignments:', error);
+			return [];
+		}
+	},
+
+	// Get recent activity
+	getRecentActivity: async (userId: string, userRole: string) => {
+		try {
+			if (userRole === 'student') {
+				const submissions = await collections.submissions().getFullList({
+					filter: `student = "${userId}"`,
+					sort: '-submitted_at',
+					expand: 'assignment,assignment.course',
+					limit: 5
+				});
+				return submissions;
+			} else if (userRole === 'lecturer') {
+				const submissions = await collections.submissions().getFullList({
+					filter: `assignment.course.lecturer = "${userId}"`,
+					sort: '-submitted_at',
+					expand: 'student,assignment',
+					limit: 5
+				});
+				return submissions;
+			} else {
+				const announcements = await collections.announcements().getFullList({
+					sort: '-created',
+					limit: 5
+				});
+				return announcements;
+			}
+		} catch (error) {
+			console.error('Error getting recent activity:', error);
+			return [];
+		}
 	}
 };
 

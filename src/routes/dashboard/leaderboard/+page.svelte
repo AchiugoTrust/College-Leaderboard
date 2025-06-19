@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { authStore } from '$lib/stores/auth';
+  import { authStore } from '$lib/pocketbase';
   import LeaderboardCard from '$lib/components/LeaderboardCard.svelte';
   
   $: user = $authStore.user;

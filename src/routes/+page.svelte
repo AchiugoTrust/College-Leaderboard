@@ -5,8 +5,7 @@
   
   let loginForm = {
     email: '',
-    password: '',
-    userType: 'student'
+    password: ''
   };
   
   let registerForm = {
@@ -14,7 +13,9 @@
     password: '',
     passwordConfirm: '',
     name: '',
-    userType: 'student'
+    userType: 'student',
+    department: '',
+    student_id: ''
   };
   
   let isLoading = false;
@@ -26,13 +27,13 @@
     errorMessage = '';
     
     try {
-      await authStore.login({
-        email: loginForm.email,
-        password: loginForm.password,
-        role: loginForm.userType as 'student' | 'lecturer' | 'staff'
-      });
+      const result = await authStore.login(loginForm.email, loginForm.password);
       
-      goto('/dashboard');
+      if (result.success) {
+        goto('/dashboard');
+      } else {
+        errorMessage = result.error || 'Login failed. Please check your credentials.';
+      }
     } catch (error: any) {
       console.error('Login failed:', error);
       errorMessage = error.message || 'Login failed. Please check your credentials.';
@@ -51,15 +52,21 @@
     errorMessage = '';
     
     try {
-      await authStore.register({
+      const result = await authStore.register({
         email: registerForm.email,
         password: registerForm.password,
         passwordConfirm: registerForm.passwordConfirm,
         name: registerForm.name,
-        role: registerForm.userType as 'student' | 'lecturer' | 'staff'
+        role: registerForm.userType as 'student' | 'lecturer' | 'staff',
+        department: registerForm.department,
+        student_id: registerForm.userType === 'student' ? registerForm.student_id : undefined
       });
       
-      goto('/dashboard');
+      if (result.success) {
+        goto('/dashboard');
+      } else {
+        errorMessage = result.error || 'Registration failed. Please try again.';
+      }
     } catch (error: any) {
       console.error('Registration failed:', error);
       errorMessage = error.message || 'Registration failed. Please try again.';
@@ -72,8 +79,8 @@
     showRegister = !showRegister;
     errorMessage = '';
     // Reset forms
-    loginForm = { email: '', password: '', userType: 'student' };
-    registerForm = { email: '', password: '', passwordConfirm: '', name: '', userType: 'student' };
+    loginForm = { email: '', password: '' };
+    registerForm = { email: '', password: '', passwordConfirm: '', name: '', userType: 'student', department: '', student_id: '' };
   }
   
   onMount(() => {
@@ -107,17 +114,6 @@
       {#if !showRegister}
         <!-- Login Form -->
         <form on:submit|preventDefault={handleLogin} class="space-y-6">
-          <div>
-            <label for="userType" class="block text-sm font-medium text-gray-700 mb-2">
-              User Type
-            </label>
-            <select bind:value={loginForm.userType} class="input-field">
-              <option value="student">Student</option>
-              <option value="lecturer">Lecturer</option>
-              <option value="staff">Staff</option>
-            </select>
-          </div>
-          
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
               Email Address
@@ -245,12 +241,4 @@
         <div class="mt-6 text-center">
           <p class="text-sm text-gray-600">
             Already have an account?
-            <button on:click={toggleRegister} class="text-primary-600 hover:text-primary-500 font-medium">
-              Sign in here
-            </button>
-          </p>
-        </div>
-      {/if}
-    </div>
-  </div>
-</div>
+            <button on:click={toggleRegister} class="text-primary-600 hover:text-primary-5

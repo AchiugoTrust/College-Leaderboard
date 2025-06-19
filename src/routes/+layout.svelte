@@ -1,12 +1,20 @@
 <script lang="ts">
   import '../app.css';
   import { page } from '$app/stores';
+  import { authStore } from '$lib/pocketbase';
+  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
-  import { authStore } from '$lib/stores/auth';
   
-  let isAuthPage = false;
+  onMount(() => {
+    authStore.init();
+  });
   
-  $: isAuthPage = $page.route.id?.includes('auth') || $page.route.id === '/';
+  // Redirect to login if not authenticated and not on login page
+  $: if (!$authStore.loading && !$authStore.isAuthenticated && $page.url.pathname !== '/') {
+    goto('/');
+  }
+  
+  $: isAuthPage = $page.url.pathname === '/';
 </script>
 
 {#if isAuthPage}

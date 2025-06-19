@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { authStore } from '$lib/stores/auth';
+  import { authStore } from '$lib/pocketbase';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
@@ -9,7 +9,7 @@
   onMount(() => {
     // Check authentication
     const unsubscribe = authStore.subscribe(auth => {
-      if (!auth.isAuthenticated) {
+      if (!auth.isAuthenticated && !auth.loading) {
         goto('/');
       }
     });

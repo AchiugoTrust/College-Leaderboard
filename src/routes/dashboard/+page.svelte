@@ -1,12 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { authStore } from '$lib/pocketbase';
-  import { 
-    getUserStats, 
-    getUserCourses, 
-    getUpcomingAssignments,
-    getRecentActivity 
-  } from '$lib/pocketbase';
+  import { authStore, utils } from '$lib/pocketbase';
   import StatsCard from '$lib/components/StatsCard.svelte';
   import RecentActivity from '$lib/components/RecentActivity.svelte';
   import UpcomingAssignments from '$lib/components/UpcomingAssignments.svelte';
@@ -33,7 +27,7 @@
   onMount(async () => {
     if (user) {
       try {
-        const userStats = await getUserStats(user.id, userRole);
+        const userStats = await utils.getUserStats(user.id, userRole);
         stats = { ...stats, ...userStats };
       } catch (error) {
         console.error('Error loading stats:', error);
@@ -151,7 +145,7 @@
   <!-- Main Content Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 space-y-6">
-      <RecentActivity {userRole} />
+      <RecentActivity {userRole} userId={user?.id || ''} />
       
       {#if userRole === 'student'}
         <UpcomingAssignments />

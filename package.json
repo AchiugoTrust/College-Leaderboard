@@ -8,7 +8,11 @@
     "dev": "vite dev",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "populate-db": "node scripts/populate-db.js",
+    "setup": "npm run populate-db",
+    "test-dashboard": "node test-dashboard.js",
+    "test-auth": "node test-auth.js"
   },
   "engines": {
     "node": "20.x"

@@ -1,10 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { 
-    getStudentRecentActivity, 
-    getLecturerRecentActivity, 
-    getStaffRecentActivity 
-  } from '$lib/pocketbase';
+  import { utils } from '$lib/pocketbase';
   
   export let userRole: string;
   export let userId: string;
@@ -39,19 +35,37 @@
   
   onMount(async () => {
     try {
-      if (userRole === 'student') {
-        activities = await getStudentRecentActivity(userId);
-      } else if (userRole === 'lecturer') {
-        activities = await getLecturerRecentActivity(userId);
-      } else {
-        activities = await getStaffRecentActivity();
-      }
+      const recentActivity = await utils.getRecentActivity(userId, userRole);
       
-      // Format time strings
-      activities = activities.map(activity => ({
-        ...activity,
-        time: formatTimeAgo(activity.created || activity.updated || new Date().toISOString())
-      }));
+      // Transform the data into the expected format
+      activities = recentActivity.map((item: any) => {
+        let title = '';
+        let course = '';
+        let icon = 'file-text';
+        
+        if (userRole === 'student') {
+          title = `Submitted assignment: ${item.expand?.assignment?.title || 'Unknown Assignment'}`;
+          course = item.expand?.assignment?.expand?.course?.name || 'Unknown Course';
+          icon = 'file-text';
+        } else if (userRole === 'lecturer') {
+          title = `New submission from ${item.expand?.student?.name || 'Unknown Student'}`;
+          course = item.expand?.assignment?.title || 'Unknown Assignment';
+          icon = 'edit-3';
+        } else {
+          title = item.title || 'System Announcement';
+          course = item.content?.substring(0, 50) + '...' || 'No content';
+          icon = 'megaphone';
+        }
+        
+        return {
+          id: item.id,
+          type: 'activity',
+          title,
+          course,
+          time: formatTimeAgo(item.created || item.updated || new Date().toISOString()),
+          icon
+        };
+      });
     } catch (error) {
       console.error('Failed to load recent activities:', error);
       // Fallback to empty array

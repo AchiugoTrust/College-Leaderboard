@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { authStore } from '$lib/stores/auth';
+  import { authStore } from '$lib/pocketbase';
   import AssignmentCard from '$lib/components/AssignmentCard.svelte';
   
   $: user = $authStore.user;

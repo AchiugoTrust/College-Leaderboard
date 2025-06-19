@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Assignment, Course } from '$lib/pocketbase';
-  import { authStore, fetchUserAssignments } from '$lib/pocketbase';
+  import { authStore, utils } from '$lib/pocketbase';
   
   let assignments: (Assignment & { course_name?: string })[] = [];
   let loading = true;
@@ -10,19 +10,13 @@
   onMount(async () => {
     if ($authStore.user) {
       try {
-        const userAssignments = await fetchUserAssignments($authStore.user.id);
+        const userAssignments = await utils.getUpcomingAssignments($authStore.user.id);
         
-        // Filter for upcoming assignments (due in the future)
-        const now = new Date();
-        const upcomingAssignments = userAssignments.filter(assignment => {
-          const dueDate = new Date(assignment.due_date);
-          return dueDate >= now;
-        });
-        
-        // Sort by due date and take first 5
-        assignments = upcomingAssignments
-          .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
-          .slice(0, 5);
+        // Transform the data to include course names
+        assignments = userAssignments.map((assignment: any) => ({
+          ...assignment,
+          course_name: assignment.expand?.course?.name || assignment.course
+        }));
         
       } catch (err) {
         console.error('Error fetching assignments:', err);
