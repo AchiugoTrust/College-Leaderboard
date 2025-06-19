@@ -12,7 +12,8 @@
     "populate-db": "node scripts/populate-db.js",
     "setup": "npm run populate-db",
     "test-dashboard": "node test-dashboard.js",
-    "test-auth": "node test-auth.js"
+    "test-auth": "node test-auth.js",
+    "test-registration": "node test-registration.js"
   },
   "engines": {
     "node": "20.x"

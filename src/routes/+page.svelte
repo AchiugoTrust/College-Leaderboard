@@ -202,6 +202,37 @@
           </div>
           
           <div>
+            <label for="regDepartment" class="block text-sm font-medium text-gray-700 mb-2">
+              Department
+            </label>
+            <select bind:value={registerForm.department} required class="input-field">
+              <option value="">Select Department</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Physics">Physics</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Business">Business</option>
+              <option value="Administration">Administration</option>
+            </select>
+          </div>
+          
+          {#if registerForm.userType === 'student'}
+            <div>
+              <label for="regStudentId" class="block text-sm font-medium text-gray-700 mb-2">
+                Student ID
+              </label>
+              <input
+                id="regStudentId"
+                type="text"
+                bind:value={registerForm.student_id}
+                required
+                class="input-field"
+                placeholder="Enter your student ID"
+              />
+            </div>
+          {/if}
+          
+          <div>
             <label for="regPassword" class="block text-sm font-medium text-gray-700 mb-2">
               Password
             </label>
@@ -241,4 +272,12 @@
         <div class="mt-6 text-center">
           <p class="text-sm text-gray-600">
             Already have an account?
-            <button on:click={toggleRegister} class="text-primary-600 hover:text-primary-5
+            <button on:click={toggleRegister} class="text-primary-600 hover:text-primary-500 font-medium">
+              Sign in here
+            </button>
+          </p>
+        </div>
+      {/if}
+    </div>
+  </div>
+</div>
