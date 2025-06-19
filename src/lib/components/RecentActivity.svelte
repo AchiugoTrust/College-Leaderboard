@@ -1,27 +1,65 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { 
+    getStudentRecentActivity, 
+    getLecturerRecentActivity, 
+    getStaffRecentActivity 
+  } from '$lib/pocketbase';
+  
   export let userRole: string;
+  export let userId: string;
   
-  const studentActivities = [
-    { id: '1', type: 'assignment', title: 'Submitted React Component Architecture', course: 'CS401', time: '2 hours ago', icon: 'file-text' },
-    { id: '2', type: 'grade', title: 'Grade received for Database Design Project', course: 'CS302', time: '1 day ago', icon: 'star' },
-    { id: '3', type: 'enrollment', title: 'Enrolled in Advanced Algorithms', course: 'CS501', time: '3 days ago', icon: 'book-open' }
-  ];
+  interface Activity {
+    id: string;
+    type: string;
+    title: string;
+    course: string;
+    time: string;
+    icon: string;
+  }
   
-  const lecturerActivities = [
-    { id: '1', type: 'grading', title: 'Graded 15 assignments for CS401', course: 'CS401', time: '1 hour ago', icon: 'edit-3' },
-    { id: '2', type: 'assignment', title: 'Created new assignment: API Integration', course: 'CS401', time: '3 hours ago', icon: 'file-text' },
-    { id: '3', type: 'announcement', title: 'Posted announcement about midterm exam', course: 'CS302', time: '1 day ago', icon: 'megaphone' }
-  ];
+  let activities: Activity[] = [];
+  let loading = true;
   
-  const staffActivities = [
-    { id: '1', type: 'course', title: 'Approved new course: Machine Learning Basics', course: 'CS600', time: '2 hours ago', icon: 'book-open' },
-    { id: '2', type: 'user', title: 'Registered 25 new students', course: 'System', time: '4 hours ago', icon: 'users' },
-    { id: '3', type: 'report', title: 'Generated semester performance report', course: 'System', time: '1 day ago', icon: 'bar-chart' }
-  ];
+  function formatTimeAgo(date: string): string {
+    const now = new Date();
+    const activityDate = new Date(date);
+    const diffInHours = Math.floor((now.getTime() - activityDate.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours === 1) return '1 hour ago';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return '1 day ago';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    
+    return activityDate.toLocaleDateString();
+  }
   
-  $: activities = userRole === 'student' ? studentActivities : 
-                  userRole === 'lecturer' ? lecturerActivities : 
-                  staffActivities;
+  onMount(async () => {
+    try {
+      if (userRole === 'student') {
+        activities = await getStudentRecentActivity(userId);
+      } else if (userRole === 'lecturer') {
+        activities = await getLecturerRecentActivity(userId);
+      } else {
+        activities = await getStaffRecentActivity();
+      }
+      
+      // Format time strings
+      activities = activities.map(activity => ({
+        ...activity,
+        time: formatTimeAgo(activity.created || activity.updated || new Date().toISOString())
+      }));
+    } catch (error) {
+      console.error('Failed to load recent activities:', error);
+      // Fallback to empty array
+      activities = [];
+    } finally {
+      loading = false;
+    }
+  });
   
   const iconPaths = {
     'file-text': 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',

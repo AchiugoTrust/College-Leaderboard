@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { authStore } from '$lib/stores/auth';
+  import { authStore } from '$lib/pocketbase';
   import { onMount } from 'svelte';
   
   let loginForm = {
@@ -9,36 +9,76 @@
     userType: 'student'
   };
   
+  let registerForm = {
+    email: '',
+    password: '',
+    passwordConfirm: '',
+    name: '',
+    userType: 'student'
+  };
+  
   let isLoading = false;
   let showRegister = false;
+  let errorMessage = '';
   
   async function handleLogin() {
     isLoading = true;
+    errorMessage = '';
+    
     try {
-      // Simulate login - replace with actual PocketBase authentication
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      authStore.set({
-        isAuthenticated: true,
-        user: {
-          id: '1',
-          email: loginForm.email,
-          name: 'John Doe',
-          role: loginForm.userType as 'student' | 'lecturer' | 'staff'
-        }
+      await authStore.login({
+        email: loginForm.email,
+        password: loginForm.password,
+        role: loginForm.userType as 'student' | 'lecturer' | 'staff'
       });
       
       goto('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      errorMessage = error.message || 'Login failed. Please check your credentials.';
     } finally {
       isLoading = false;
     }
   }
   
-  function handleRegister() {
-    showRegister = !showRegister;
+  async function handleRegisterSubmit() {
+    if (registerForm.password !== registerForm.passwordConfirm) {
+      errorMessage = 'Passwords do not match';
+      return;
+    }
+    
+    isLoading = true;
+    errorMessage = '';
+    
+    try {
+      await authStore.register({
+        email: registerForm.email,
+        password: registerForm.password,
+        passwordConfirm: registerForm.passwordConfirm,
+        name: registerForm.name,
+        role: registerForm.userType as 'student' | 'lecturer' | 'staff'
+      });
+      
+      goto('/dashboard');
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      errorMessage = error.message || 'Registration failed. Please try again.';
+    } finally {
+      isLoading = false;
+    }
   }
+  
+  function toggleRegister() {
+    showRegister = !showRegister;
+    errorMessage = '';
+    // Reset forms
+    loginForm = { email: '', password: '', userType: 'student' };
+    registerForm = { email: '', password: '', passwordConfirm: '', name: '', userType: 'student' };
+  }
+  
+  onMount(() => {
+    authStore.init();
+  });
 </script>
 
 <svelte:head>
@@ -58,63 +98,159 @@
     </div>
     
     <div class="bg-white p-8 rounded-xl shadow-lg">
-      <form on:submit|preventDefault={handleLogin} class="space-y-6">
-        <div>
-          <label for="userType" class="block text-sm font-medium text-gray-700 mb-2">
-            User Type
-          </label>
-          <select bind:value={loginForm.userType} class="input-field">
-            <option value="student">Student</option>
-            <option value="lecturer">Lecturer</option>
-            <option value="staff">Staff</option>
-          </select>
+      {#if errorMessage}
+        <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {errorMessage}
         </div>
-        
-        <div>
-          <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
-            bind:value={loginForm.email}
-            required
-            class="input-field"
-            placeholder="Enter your email"
-          />
-        </div>
-        
-        <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            bind:value={loginForm.password}
-            required
-            class="input-field"
-            placeholder="Enter your password"
-          />
-        </div>
-        
-        <button
-          type="submit"
-          disabled={isLoading}
-          class="w-full btn-primary py-3 {isLoading ? 'opacity-50 cursor-not-allowed' : ''}"
-        >
-          {isLoading ? 'Signing in...' : 'Sign In'}
-        </button>
-      </form>
+      {/if}
       
-      <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600">
-          Don't have an account?
-          <button on:click={handleRegister} class="text-primary-600 hover:text-primary-500 font-medium">
-            Register here
+      {#if !showRegister}
+        <!-- Login Form -->
+        <form on:submit|preventDefault={handleLogin} class="space-y-6">
+          <div>
+            <label for="userType" class="block text-sm font-medium text-gray-700 mb-2">
+              User Type
+            </label>
+            <select bind:value={loginForm.userType} class="input-field">
+              <option value="student">Student</option>
+              <option value="lecturer">Lecturer</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              bind:value={loginForm.email}
+              required
+              class="input-field"
+              placeholder="Enter your email"
+            />
+          </div>
+          
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              bind:value={loginForm.password}
+              required
+              class="input-field"
+              placeholder="Enter your password"
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={isLoading}
+            class="w-full btn-primary py-3 {isLoading ? 'opacity-50 cursor-not-allowed' : ''}"
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
-        </p>
-      </div>
+        </form>
+        
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600">
+            Don't have an account?
+            <button on:click={toggleRegister} class="text-primary-600 hover:text-primary-500 font-medium">
+              Register here
+            </button>
+          </p>
+        </div>
+      {:else}
+        <!-- Registration Form -->
+        <form on:submit|preventDefault={handleRegisterSubmit} class="space-y-6">
+          <div>
+            <label for="regUserType" class="block text-sm font-medium text-gray-700 mb-2">
+              User Type
+            </label>
+            <select bind:value={registerForm.userType} class="input-field">
+              <option value="student">Student</option>
+              <option value="lecturer">Lecturer</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="regName" class="block text-sm font-medium text-gray-700 mb-2">
+              Full Name
+            </label>
+            <input
+              id="regName"
+              type="text"
+              bind:value={registerForm.name}
+              required
+              class="input-field"
+              placeholder="Enter your full name"
+            />
+          </div>
+          
+          <div>
+            <label for="regEmail" class="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <input
+              id="regEmail"
+              type="email"
+              bind:value={registerForm.email}
+              required
+              class="input-field"
+              placeholder="Enter your email"
+            />
+          </div>
+          
+          <div>
+            <label for="regPassword" class="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              id="regPassword"
+              type="password"
+              bind:value={registerForm.password}
+              required
+              class="input-field"
+              placeholder="Enter your password"
+            />
+          </div>
+          
+          <div>
+            <label for="regPasswordConfirm" class="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password
+            </label>
+            <input
+              id="regPasswordConfirm"
+              type="password"
+              bind:value={registerForm.passwordConfirm}
+              required
+              class="input-field"
+              placeholder="Confirm your password"
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={isLoading}
+            class="w-full btn-primary py-3 {isLoading ? 'opacity-50 cursor-not-allowed' : ''}"
+          >
+            {isLoading ? 'Creating account...' : 'Create Account'}
+          </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600">
+            Already have an account?
+            <button on:click={toggleRegister} class="text-primary-600 hover:text-primary-500 font-medium">
+              Sign in here
+            </button>
+          </p>
+        </div>
+      {/if}
     </div>
   </div>
 </div>

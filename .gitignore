@@ -1,2 +1,4 @@
 backend
 .vercel
+pocketbase
+pocketbase-schema.md
