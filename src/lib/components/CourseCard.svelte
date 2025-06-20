@@ -1,4 +1,8 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  
+  const dispatch = createEventDispatcher();
+  
   export let course: {
     id: string;
     name: string;
@@ -24,6 +28,11 @@
     if (isTomorrow) return `Tomorrow at ${timeStr}`;
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` at ${timeStr}`;
   }
+
+  function handleDelete() {
+    // Dispatch delete event to parent component
+    dispatch('delete', { courseId: course.id, courseName: course.name });
+  }
 </script>
 
 <div class="card hover:shadow-lg transition-shadow duration-200 cursor-pointer">
@@ -33,9 +42,23 @@
       <p class="text-sm text-gray-600">{course.code}</p>
     </div>
     
-    <span class="bg-primary-100 text-primary-700 text-xs font-medium px-2.5 py-1 rounded-full">
-      {course.progress}% Complete
-    </span>
+    <div class="flex items-center space-x-2">
+      <span class="bg-primary-100 text-primary-700 text-xs font-medium px-2.5 py-1 rounded-full">
+        {course.progress}% Complete
+      </span>
+      
+      {#if userRole === 'lecturer'}
+        <button
+          on:click|stopPropagation={handleDelete}
+          class="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition-colors"
+          title="Delete course"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
+      {/if}
+    </div>
   </div>
   
   <p class="text-sm text-gray-600 mb-4">{course.description}</p>

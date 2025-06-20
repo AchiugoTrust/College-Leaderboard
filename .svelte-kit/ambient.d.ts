@@ -46,6 +46,8 @@ declare module '$env/static/private' {
 	export const ENVMAN_LOAD: string;
 	export const ERLANG_HOME: string;
 	export const EXEPATH: string;
+	export const FPS_BROWSER_APP_PROFILE_STRING: string;
+	export const FPS_BROWSER_USER_PROFILE_STRING: string;
 	export const GIT_ASKPASS: string;
 	export const HOME: string;
 	export const HOMEDRIVE: string;
@@ -184,6 +186,8 @@ declare module '$env/dynamic/private' {
 		ENVMAN_LOAD: string;
 		ERLANG_HOME: string;
 		EXEPATH: string;
+		FPS_BROWSER_APP_PROFILE_STRING: string;
+		FPS_BROWSER_USER_PROFILE_STRING: string;
 		GIT_ASKPASS: string;
 		HOME: string;
 		HOMEDRIVE: string;

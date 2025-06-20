@@ -451,27 +451,151 @@ export const utils = {
 					filter: `student = "${userId}"`,
 					sort: '-submitted_at',
 					expand: 'assignment,assignment.course',
-					limit: 5
+					perPage: 5
 				});
 				return submissions;
 			} else if (userRole === 'lecturer') {
-				const submissions = await collections.submissions().getFullList({
-					filter: `assignment.course.lecturer = "${userId}"`,
-					sort: '-submitted_at',
-					expand: 'student,assignment',
-					limit: 5
-				});
-				return submissions;
-			} else {
-				const announcements = await collections.announcements().getFullList({
+				const assignments = await collections.assignments().getFullList({
+					filter: `created_by = "${userId}"`,
 					sort: '-created',
-					limit: 5
+					expand: 'course',
+					perPage: 5
 				});
-				return announcements;
+				return assignments;
 			}
+			return [];
 		} catch (error) {
 			console.error('Error getting recent activity:', error);
 			return [];
+		}
+	},
+
+	// Course management functions
+	createCourse: async (courseData: Partial<Course>): Promise<Course> => {
+		try {
+			const course = await collections.courses().create(courseData);
+			return course as Course;
+		} catch (error: any) {
+			console.error('Error creating course:', error);
+			throw new Error(error.message || 'Failed to create course');
+		}
+	},
+
+	updateCourse: async (courseId: string, courseData: Partial<Course>): Promise<Course> => {
+		try {
+			const course = await collections.courses().update(courseId, courseData);
+			return course as Course;
+		} catch (error: any) {
+			console.error('Error updating course:', error);
+			throw new Error(error.message || 'Failed to update course');
+		}
+	},
+
+	deleteCourse: async (courseId: string): Promise<void> => {
+		try {
+			// First check if there are any enrollments for this course
+			const enrollments = await collections.enrollments().getFullList({
+				filter: `course = "${courseId}" && status = "enrolled"`
+			});
+
+			if (enrollments.length > 0) {
+				throw new Error('Cannot delete course with active enrollments. Please drop all students first.');
+			}
+
+			// Check if there are any assignments for this course
+			const assignments = await collections.assignments().getFullList({
+				filter: `course = "${courseId}"`
+			});
+
+			if (assignments.length > 0) {
+				throw new Error('Cannot delete course with existing assignments. Please delete all assignments first.');
+			}
+
+			await collections.courses().delete(courseId);
+		} catch (error: any) {
+			console.error('Error deleting course:', error);
+			throw new Error(error.message || 'Failed to delete course');
+		}
+	},
+
+	getLecturerCourses: async (lecturerId: string): Promise<Course[]> => {
+		try {
+			const courses = await collections.courses().getFullList({
+				filter: `lecturer = "${lecturerId}"`,
+				sort: '-created',
+				expand: 'department'
+			});
+			return courses as Course[];
+		} catch (error) {
+			console.error('Error getting lecturer courses:', error);
+			return [];
+		}
+	},
+
+	getAvailableCourses: async (): Promise<Course[]> => {
+		try {
+			const courses = await collections.courses().getFullList({
+				filter: 'is_active = true',
+				sort: '-created',
+				expand: 'department,lecturer'
+			});
+			return courses as Course[];
+		} catch (error) {
+			console.error('Error getting available courses:', error);
+			return [];
+		}
+	},
+
+	enrollStudent: async (studentId: string, courseId: string): Promise<void> => {
+		try {
+			// Check if student is already enrolled
+			const existingEnrollment = await collections.enrollments().getFirstListItem(
+				`student = "${studentId}" && course = "${courseId}" && status = "enrolled"`
+			);
+
+			if (existingEnrollment) {
+				throw new Error('Student is already enrolled in this course');
+			}
+
+			// Check course capacity
+			const course = await collections.courses().getOne(courseId);
+			const currentEnrollments = await collections.enrollments().getFullList({
+				filter: `course = "${courseId}" && status = "enrolled"`
+			});
+
+			if (course.max_students && currentEnrollments.length >= course.max_students) {
+				throw new Error('Course is at maximum capacity');
+			}
+
+			// Create enrollment
+			await collections.enrollments().create({
+				student: studentId,
+				course: courseId,
+				enrollment_date: new Date().toISOString(),
+				status: 'enrolled'
+			});
+		} catch (error: any) {
+			console.error('Error enrolling student:', error);
+			throw new Error(error.message || 'Failed to enroll student');
+		}
+	},
+
+	dropStudent: async (studentId: string, courseId: string): Promise<void> => {
+		try {
+			const enrollment = await collections.enrollments().getFirstListItem(
+				`student = "${studentId}" && course = "${courseId}" && status = "enrolled"`
+			);
+
+			if (!enrollment) {
+				throw new Error('Student is not enrolled in this course');
+			}
+
+			await collections.enrollments().update(enrollment.id, {
+				status: 'dropped'
+			});
+		} catch (error: any) {
+			console.error('Error dropping student:', error);
+			throw new Error(error.message || 'Failed to drop student');
 		}
 	}
 };

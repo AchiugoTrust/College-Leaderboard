@@ -3,5 +3,6 @@
 	"/dashboard": [],
 	"/dashboard/assignments": [],
 	"/dashboard/courses": [],
+	"/dashboard/courses/enroll": [],
 	"/dashboard/leaderboard": []
 }
