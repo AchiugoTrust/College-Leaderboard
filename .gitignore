@@ -1,5 +1,4 @@
 .DS_Store
-node_modules
 /build
 /.svelte-kit
 /package
@@ -11,3 +10,4 @@ vite.config.ts.timestamp-*
 pocketbase
 pb_data
 pb_migrations
+pocketbase_new
